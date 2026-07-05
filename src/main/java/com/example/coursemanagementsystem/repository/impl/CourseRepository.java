@@ -1,6 +1,7 @@
 package com.example.coursemanagementsystem.repository.impl;
 
 import com.example.coursemanagementsystem.exception.ResourceNotFoundException;
+import com.example.coursemanagementsystem.exception.BusinessException;
 import com.example.coursemanagementsystem.model.Course;
 import com.example.coursemanagementsystem.model.CourseStatus;
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ public class CourseRepository implements com.example.coursemanagementsystem.repo
 
     @Override
     public Course create(Course course) {
+        if (findById(course.getId()).isPresent()) {
+            throw new BusinessException("Course id already exists");
+        }
         courses.add(course);
         return course;
     }

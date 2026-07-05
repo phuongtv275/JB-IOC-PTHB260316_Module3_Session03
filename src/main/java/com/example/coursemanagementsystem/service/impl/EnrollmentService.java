@@ -70,6 +70,10 @@ public class EnrollmentService implements IEnrollmentService {
         instructorRepository.findById(course.getInstructorId())
                 .orElseThrow(() -> new BusinessException("Instructor not found"));
 
+        if (enrollmentRepository.existsByStudentNameAndCourseId(request.getStudentName(), request.getCourseId())) {
+            throw new BusinessException("Student already enrolled in this course");
+        }
+
         Enrollment enrollment = enrollmentRepository.create(
                 new Enrollment(request.getId(), request.getStudentName(), request.getCourseId())
         );

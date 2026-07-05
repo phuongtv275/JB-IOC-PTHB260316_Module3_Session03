@@ -1,5 +1,6 @@
 package com.example.coursemanagementsystem.repository.impl;
 
+import com.example.coursemanagementsystem.exception.BusinessException;
 import com.example.coursemanagementsystem.exception.ResourceNotFoundException;
 import com.example.coursemanagementsystem.model.Enrollment;
 import java.util.ArrayList;
@@ -30,7 +31,20 @@ public class EnrollmentRepository implements com.example.coursemanagementsystem.
     }
 
     @Override
+    public boolean existsByStudentNameAndCourseId(String studentName, Long courseId) {
+        return enrollments.stream()
+                .anyMatch(enrollment -> enrollment.getStudentName().equals(studentName)
+                        && enrollment.getCourseId().equals(courseId));
+    }
+
+    @Override
     public Enrollment create(Enrollment enrollment) {
+        if (findById(enrollment.getId()).isPresent()) {
+            throw new BusinessException("Enrollment id already exists");
+        }
+        if (existsByStudentNameAndCourseId(enrollment.getStudentName(), enrollment.getCourseId())) {
+            throw new BusinessException("Student already enrolled in this course");
+        }
         enrollments.add(enrollment);
         return enrollment;
     }

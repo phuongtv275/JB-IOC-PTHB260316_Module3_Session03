@@ -11,6 +11,8 @@ public interface EnrollmentRepository {
 
     boolean existsByCourseId(Long courseId);
 
+    boolean existsByStudentNameAndCourseId(String studentName, Long courseId);
+
     Enrollment create(Enrollment enrollment);
 
     Enrollment update(Long id, Enrollment enrollment);
