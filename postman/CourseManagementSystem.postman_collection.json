@@ -1,0 +1,350 @@
+{
+  "info": {
+    "name": "Course Management System - Session03",
+    "description": "Postman collection for Session03 exercise scenarios: ApiResponse shape, CRUD, Optional errors, enrollment business rules, and instructor details.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Seed Data And ApiResponse",
+      "item": [
+        {
+          "name": "Get Courses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('response is successful', () => pm.expect(json.success).to.eql(true));",
+                  "pm.test('message matches', () => pm.expect(json.message).to.eql('Fetched courses successfully'));",
+                  "pm.test('seed course exists', () => pm.expect(json.data.some(course => course.title === 'Intro Java')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Instructors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/instructors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('response is successful', () => pm.expect(json.success).to.eql(true));",
+                  "pm.test('has seed instructors', () => pm.expect(json.data.length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Enrollments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/enrollments"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('response is successful', () => pm.expect(json.success).to.eql(true));",
+                  "pm.test('has seed enrollments', () => pm.expect(json.data.length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Course CRUD",
+      "item": [
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 10,\n  \"title\": \"REST API\",\n  \"status\": \"ACTIVE\",\n  \"instructorId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/courses"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.test('course created', () => pm.expect(json.message).to.eql('Course created'));",
+                  "pm.test('created title matches', () => pm.expect(json.data.title).to.eql('REST API'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Created Course",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses/10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('created course found', () => pm.expect(json.data.title).to.eql('REST API'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"REST API Updated\",\n  \"status\": \"INACTIVE\",\n  \"instructorId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/courses/10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('course updated', () => pm.expect(json.message).to.eql('Course updated'));",
+                  "pm.test('updated title matches', () => pm.expect(json.data.title).to.eql('REST API Updated'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/courses/10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deleted Course",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses/10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "const json = pm.response.json();",
+                  "pm.test('not found response', () => pm.expect(json.success).to.eql(false));",
+                  "pm.test('message matches', () => pm.expect(json.message).to.eql('Course not found'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Enrollment Business Rules",
+      "item": [
+        {
+          "name": "Enroll Active Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 100,\n  \"studentName\": \"Student test\",\n  \"courseId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/enrollments/enroll-course"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('enrollment successful', () => pm.expect(json.message).to.eql('Enrollment successful'));",
+                  "pm.test('returns enrollment detail', () => pm.expect(json.data.id).to.eql(100));",
+                  "pm.test('course is active', () => pm.expect(json.data.course.status).to.eql('ACTIVE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Inactive Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 101,\n  \"studentName\": \"Student test\",\n  \"courseId\": 2\n}"
+            },
+            "url": "{{baseUrl}}/enrollments/enroll-course"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "const json = pm.response.json();",
+                  "pm.test('response fails', () => pm.expect(json.success).to.eql(false));",
+                  "pm.test('message matches', () => pm.expect(json.message).to.eql('Cannot enroll in an inactive course'));",
+                  "pm.test('data is null', () => pm.expect(json.data).to.eql(null));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Missing Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 102,\n  \"studentName\": \"Student test\",\n  \"courseId\": 999\n}"
+            },
+            "url": "{{baseUrl}}/enrollments/enroll-course"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "const json = pm.response.json();",
+                  "pm.test('response fails', () => pm.expect(json.success).to.eql(false));",
+                  "pm.test('message matches', () => pm.expect(json.message).to.eql('Course not found'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Instructor Details",
+      "item": [
+        {
+          "name": "Get Instructor Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/instructors/details"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('response is successful', () => pm.expect(json.success).to.eql(true));",
+                  "pm.test('only active courses are returned', () => {",
+                  "  const courses = json.data.flatMap(item => item.courses);",
+                  "  pm.expect(courses.every(course => course.status === 'ACTIVE')).to.eql(true);",
+                  "});",
+                  "pm.test('seed active enrolled course exists', () => {",
+                  "  const courses = json.data.flatMap(item => item.courses);",
+                  "  pm.expect(courses.some(course => course.title === 'Intro Java')).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
