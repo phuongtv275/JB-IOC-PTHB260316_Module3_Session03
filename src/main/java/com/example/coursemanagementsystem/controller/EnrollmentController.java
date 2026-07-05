@@ -4,7 +4,7 @@ import com.example.coursemanagementsystem.dto.ApiResponse;
 import com.example.coursemanagementsystem.dto.EnrollCourseRequest;
 import com.example.coursemanagementsystem.dto.EnrollmentDetail;
 import com.example.coursemanagementsystem.model.Enrollment;
-import com.example.coursemanagementsystem.service.EnrollmentService;
+import com.example.coursemanagementsystem.service.IEnrollmentService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/enrollments")
 public class EnrollmentController {
-    private final EnrollmentService enrollmentService;
+    private final IEnrollmentService enrollmentService;
 
     @Autowired
-    public EnrollmentController(EnrollmentService enrollmentService) {
+    public EnrollmentController(IEnrollmentService enrollmentService) {
         this.enrollmentService = enrollmentService;
     }
 
@@ -35,11 +35,7 @@ public class EnrollmentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Enrollment>> findById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(ApiResponse.ok("Fetched enrollment successfully", enrollmentService.getEnrollmentById(id)));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage()));
-        }
+        return ResponseEntity.ok(ApiResponse.ok("Fetched enrollment successfully", enrollmentService.getEnrollmentById(id)));
     }
 
     @PostMapping
@@ -50,29 +46,17 @@ public class EnrollmentController {
 
     @PostMapping("/enroll-course")
     public ResponseEntity<ApiResponse<EnrollmentDetail>> enrollCourse(@RequestBody EnrollCourseRequest request) {
-        try {
-            return ResponseEntity.ok(ApiResponse.ok("Enrollment successful", enrollmentService.enrollCourse(request)));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
-        }
+        return ResponseEntity.ok(ApiResponse.ok("Enrollment successful", enrollmentService.enrollCourse(request)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Enrollment>> update(@PathVariable Long id, @RequestBody Enrollment enrollment) {
-        try {
-            return ResponseEntity.ok(ApiResponse.ok("Enrollment updated", enrollmentService.updateEnrollment(id, enrollment)));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage()));
-        }
+        return ResponseEntity.ok(ApiResponse.ok("Enrollment updated", enrollmentService.updateEnrollment(id, enrollment)));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Enrollment>> delete(@PathVariable Long id) {
-        try {
-            enrollmentService.deleteEnrollmentById(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage()));
-        }
+        enrollmentService.deleteEnrollmentById(id);
+        return ResponseEntity.noContent().build();
     }
 }

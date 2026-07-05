@@ -3,13 +3,13 @@ package com.example.coursemanagementsystem.model;
 public class Course {
     private Long id;
     private String title;
-    private String status;
+    private CourseStatus status;
     private Long instructorId;
 
     public Course() {
     }
 
-    public Course(Long id, String title, String status, Long instructorId) {
+    public Course(Long id, String title, CourseStatus status, Long instructorId) {
         this.id = id;
         this.title = title;
         this.status = status;
@@ -32,11 +32,11 @@ public class Course {
         this.title = title;
     }
 
-    public String getStatus() {
+    public CourseStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(CourseStatus status) {
         this.status = status;
     }
 
