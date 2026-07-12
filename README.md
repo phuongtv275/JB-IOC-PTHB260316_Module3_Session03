@@ -51,6 +51,7 @@ docker run --name rikkei-app \
 ## Run Locally
 
 PostgreSQL must be running and reachable on `localhost:5432`.
+On startup, the app tops up sample data to about 20 records in each table: instructors, courses, students, and student enrollments.
 
 ```bash
 JAVA_HOME=/home/trgphun/.jdks/ms-21.0.11 ./mvnw spring-boot:run
@@ -83,7 +84,7 @@ JAVA_HOME=/home/trgphun/.jdks/ms-21.0.11 ./mvnw test
 
 ### Courses
 
-- `GET /courses`
+- `GET /courses?page=0&size=10&sortBy=title&direction=ASC&status=ACTIVE&keyword=Spring`
 - `GET /courses/{id}`
 - `POST /courses`
 - `PUT /courses/{id}`
@@ -95,7 +96,7 @@ JAVA_HOME=/home/trgphun/.jdks/ms-21.0.11 ./mvnw test
 
 ### Students
 
-- `GET /students`
+- `GET /students?page=0&size=10&sortBy=name&direction=ASC&keyword=Tran`
 - `GET /students/{id}`
 - `POST /students`
 
@@ -147,6 +148,35 @@ Successful enrollment response:
     "studentId": 1,
     "courseId": 1,
     "enrolledAt": "2026-07-13T10:00:00"
+  }
+}
+```
+
+List courses with paging/filtering:
+
+```bash
+curl 'http://localhost:8080/courses?page=0&size=2&sortBy=title&direction=ASC&status=ACTIVE&keyword=Spring'
+```
+
+List response shape:
+
+```json
+{
+  "success": true,
+  "message": "Fetched courses successfully",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "title": "Spring Data JPA",
+        "status": "ACTIVE"
+      }
+    ],
+    "page": 0,
+    "size": 2,
+    "totalItems": 1,
+    "totalPages": 1,
+    "isLast": true
   }
 }
 ```

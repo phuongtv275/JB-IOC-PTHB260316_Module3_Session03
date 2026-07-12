@@ -2,10 +2,11 @@ package com.example.coursemanagementsystem.service;
 
 import com.example.coursemanagementsystem.dto.StudentCreateRequest;
 import com.example.coursemanagementsystem.dto.StudentResponse;
-import java.util.List;
+import com.example.coursemanagementsystem.dto.PageResponse;
+import org.springframework.data.domain.Sort;
 
 public interface IStudentService {
-    List<StudentResponse> getAllStudents();
+    PageResponse<StudentResponse> getAllStudents(int page, int size, String sortBy, Sort.Direction direction, String keyword);
 
     StudentResponse getStudentById(Long id);
 

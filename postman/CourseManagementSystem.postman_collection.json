@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Course Management System - Session04",
-    "description": "Postman collection for Session04 JPA, DTO, student enrollment, search, dropout, and error scenarios.",
+    "name": "Course Management System - Session05",
+    "description": "Full 17-request collection matching docs/testing-scenario.md. Requests are ordered so the collection can run sequentially.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -18,24 +18,20 @@
       "value": ""
     },
     {
-      "key": "inactiveCourseId",
-      "value": ""
-    },
-    {
       "key": "studentId",
       "value": ""
     },
     {
-      "key": "secondStudentId",
+      "key": "inactiveCourseId",
       "value": ""
     }
   ],
   "item": [
     {
-      "name": "01 - Instructor And Course",
+      "name": "Scenario 1 - Instructor And Course Flow",
       "item": [
         {
-          "name": "Create Instructor",
+          "name": "01 - Create Instructor",
           "request": {
             "method": "POST",
             "header": [
@@ -58,7 +54,7 @@
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.test('created instructor', () => pm.expect(json.message).to.eql('Instructor created'));",
+                  "pm.test('message matches', () => pm.expect(json.message).to.eql('Instructor created'));",
                   "pm.collectionVariables.set('instructorId', json.data.id);"
                 ]
               }
@@ -66,7 +62,7 @@
           ]
         },
         {
-          "name": "Create Course",
+          "name": "02 - Create Course",
           "request": {
             "method": "POST",
             "header": [
@@ -89,8 +85,7 @@
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.test('created course', () => pm.expect(json.message).to.eql('Course created'));",
-                  "pm.test('course uses instructor dto', () => pm.expect(json.data.instructor.id).to.eql(Number(pm.collectionVariables.get('instructorId'))));",
+                  "pm.test('created inactive course', () => pm.expect(json.data.status).to.eql('INACTIVE'));",
                   "pm.collectionVariables.set('courseId', json.data.id);"
                 ]
               }
@@ -98,7 +93,7 @@
           ]
         },
         {
-          "name": "Update Course Active",
+          "name": "03 - Update Course Active",
           "request": {
             "method": "PUT",
             "header": [
@@ -128,11 +123,11 @@
           ]
         },
         {
-          "name": "Get Courses",
+          "name": "04 - List Courses Basic",
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{baseUrl}}/courses"
+            "url": "{{baseUrl}}/courses?page=0&size=10"
           },
           "event": [
             {
@@ -142,7 +137,30 @@
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
-                  "pm.test('returns course dtos', () => pm.expect(json.data[0]).to.have.keys(['id', 'title', 'status', 'instructor']));"
+                  "pm.test('has page response', () => pm.expect(json.data).to.have.keys(['items', 'page', 'size', 'totalItems', 'totalPages', 'isLast']));",
+                  "pm.test('items is array', () => pm.expect(json.data.items).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 - List Courses Filter Sort",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?page=0&size=2&sortBy=title&direction=ASC&status=ACTIVE&keyword=Spring"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('uses projection without instructor', () => pm.expect(json.data.items[0]).to.not.have.property('instructor'));",
+                  "pm.test('matches active Spring course', () => pm.expect(json.data.items.some(course => course.status === 'ACTIVE' && course.title.includes('Spring'))).to.eql(true));"
                 ]
               }
             }
@@ -151,10 +169,10 @@
       ]
     },
     {
-      "name": "02 - Student Enrollment",
+      "name": "Scenario 2 - Student Enrollment Flow",
       "item": [
         {
-          "name": "Create Student",
+          "name": "01 - Create Student",
           "request": {
             "method": "POST",
             "header": [
@@ -177,6 +195,7 @@
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
+                  "pm.test('message matches', () => pm.expect(json.message).to.eql('Student created'));",
                   "pm.collectionVariables.set('studentId', json.data.id);"
                 ]
               }
@@ -184,7 +203,7 @@
           ]
         },
         {
-          "name": "Enroll Student",
+          "name": "02 - Enroll Student",
           "request": {
             "method": "POST",
             "header": [
@@ -215,7 +234,7 @@
           ]
         },
         {
-          "name": "Reject Duplicate Enrollment",
+          "name": "03 - Reject Duplicate Enrollment",
           "request": {
             "method": "POST",
             "header": [
@@ -245,7 +264,7 @@
           ]
         },
         {
-          "name": "Search Enrolled Students",
+          "name": "04 - Search Enrolled Students",
           "request": {
             "method": "GET",
             "header": [],
@@ -259,14 +278,14 @@
                 "exec": [
                   "pm.test('status is 200', () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
-                  "pm.test('student found', () => pm.expect(json.data.length).to.be.at.least(1));"
+                  "pm.test('returns matching student', () => pm.expect(json.data.some(student => student.name.includes('Tran'))).to.eql(true));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Drop Student",
+          "name": "05 - Drop Student",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -287,10 +306,10 @@
       ]
     },
     {
-      "name": "03 - Compatibility Endpoint",
+      "name": "Scenario 3 - Compatibility Endpoint",
       "item": [
         {
-          "name": "Create Second Student",
+          "name": "01 - Create Enrollment Via Compatibility Endpoint",
           "request": {
             "method": "POST",
             "header": [
@@ -301,37 +320,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Le Van C\",\n  \"email\": \"c@example.com\"\n}"
-            },
-            "url": "{{baseUrl}}/students"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('secondStudentId', json.data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Create Enrollment Via Students Enrollments",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"studentId\": {{secondStudentId}},\n  \"courseId\": {{courseId}}\n}"
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}}\n}"
             },
             "url": "{{baseUrl}}/students-enrollments"
           },
@@ -343,7 +332,7 @@
                 "exec": [
                   "pm.test('status is 201', () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.test('compat endpoint returns same shape', () => pm.expect(json.data.courseId).to.eql(Number(pm.collectionVariables.get('courseId'))));"
+                  "pm.test('compat endpoint returns enrollment shape', () => pm.expect(json.data.courseId).to.eql(Number(pm.collectionVariables.get('courseId'))));"
                 ]
               }
             }
@@ -352,10 +341,78 @@
       ]
     },
     {
-      "name": "04 - Error Cases",
+      "name": "Scenario 4 - Student List Paging",
       "item": [
         {
-          "name": "Create Course With Missing Instructor",
+          "name": "01 - List Students Basic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students?page=0&size=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('has page response', () => pm.expect(json.data).to.have.keys(['items', 'page', 'size', 'totalItems', 'totalPages', 'isLast']));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - List Students Filter Sort",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students?page=0&size=2&sortBy=name&direction=ASC&keyword=Tran"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('student matches keyword', () => pm.expect(json.data.items.some(student => student.name.includes('Tran'))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 - List Students Negative Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students?page=-1&size=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('negative page falls back to zero', () => pm.expect(json.data.page).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scenario 5 - Error Cases",
+      "item": [
+        {
+          "name": "01 - Create Course With Missing Instructor",
           "request": {
             "method": "POST",
             "header": [
@@ -385,37 +442,7 @@
           ]
         },
         {
-          "name": "Create Inactive Course",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Inactive Course\",\n  \"status\": \"INACTIVE\",\n  \"instructorId\": {{instructorId}}\n}"
-            },
-            "url": "{{baseUrl}}/courses"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('inactiveCourseId', json.data.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Reject Inactive Course Enrollment",
+          "name": "02 - Reject Inactive Course Enrollment",
           "request": {
             "method": "POST",
             "header": [
@@ -438,14 +465,14 @@
                 "exec": [
                   "pm.test('status is 400', () => pm.response.to.have.status(400));",
                   "const json = pm.response.json();",
-                  "pm.test('inactive rejected', () => pm.expect(json.message).to.eql('Cannot enroll in an inactive course'));"
+                  "pm.test('inactive course rejected', () => pm.expect(json.message).to.eql('Cannot enroll in an inactive course'));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Get Missing Course",
+          "name": "03 - Get Missing Course",
           "request": {
             "method": "GET",
             "header": [],

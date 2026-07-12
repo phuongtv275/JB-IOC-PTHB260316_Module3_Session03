@@ -18,8 +18,7 @@ public interface StudentEnrollmentRepository extends JpaRepository<StudentEnroll
             select enrollment
             from StudentEnrollment enrollment
             where enrollment.course.id = :courseId
-              and (:search is null
-                   or lower(enrollment.student.name) like lower(concat('%', :search, '%')))
+              and lower(enrollment.student.name) like lower(concat('%', :search, '%'))
             """)
     List<StudentEnrollment> findCourseStudents(
             @Param("courseId") Long courseId,

@@ -59,7 +59,7 @@ public class StudentEnrollmentService implements IStudentEnrollmentService {
     @Override
     public List<EnrolledStudentResponse> findCourseStudents(Long courseId, String search) {
         findCourse(courseId);
-        String keyword = search == null || search.isBlank() ? null : search.trim();
+        String keyword = search == null || search.isBlank() ? "" : search.trim();
         return enrollmentRepository.findCourseStudents(courseId, keyword).stream()
                 .map(enrollment -> new EnrolledStudentResponse(
                         enrollment.getStudent().getId(),

@@ -8,6 +8,8 @@ Start PostgreSQL container with database `rikkei-postgres`, user `rikkei`, passw
 JAVA_HOME=/home/trgphun/.jdks/ms-21.0.11 ./mvnw spring-boot:run
 ```
 
+On startup, the app tops up sample data to about 20 records in each table.
+
 Run app container on the same Docker network:
 
 ```bash
@@ -37,9 +39,14 @@ docker run --name rikkei-app \
    - Expected status: `200`
    - Expected body: `data.status = ACTIVE`
 
-4. `GET /courses`
+4. `GET /courses?page=0&size=10`
    - Expected status: `200`
-   - Expected body: courses are DTOs with `id`, `title`, `status`, `instructor`; no circular entity graph
+   - Expected body: `data.items` contains course DTO projection with `id`, `title`, `status`
+   - Expected body: `data.page`, `data.size`, `data.totalItems`, `data.totalPages`, `data.isLast`
+
+5. `GET /courses?page=0&size=2&sortBy=title&direction=ASC&status=ACTIVE&keyword=Spring`
+   - Expected status: `200`
+   - Expected body: only active courses with title matching `Spring`, sorted by title ascending
 
 ## Scenario 2: Student Enrollment Flow
 
@@ -71,7 +78,21 @@ docker run --name rikkei-app \
    - Expected status: `201`
    - Expected body shape matches `POST /courses/<courseId>/enrollments`
 
-## Scenario 4: Error Cases
+## Scenario 4: Student List Paging
+
+1. `GET /students?page=0&size=10`
+   - Expected status: `200`
+   - Expected body: `data.items` contains student DTOs and pagination metadata
+
+2. `GET /students?page=0&size=2&sortBy=name&direction=ASC&keyword=Tran`
+   - Expected status: `200`
+   - Expected body: students matching name `Tran`, sorted by name ascending
+
+3. `GET /students?page=-1&size=2`
+   - Expected status: `200`
+   - Expected body: `data.page = 0`
+
+## Scenario 5: Error Cases
 
 1. `POST /courses`
    - Body: `{"title":"Invalid Course","status":"ACTIVE","instructorId":999999}`
