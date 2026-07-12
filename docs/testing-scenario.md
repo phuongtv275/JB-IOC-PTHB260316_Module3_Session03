@@ -2,70 +2,93 @@
 
 Base URL: `http://localhost:8080`
 
-Start the app before running:
+Start PostgreSQL container with database `rikkei-postgres`, user `rikkei`, password `rikkei`, then run locally:
 
 ```bash
 JAVA_HOME=/home/trgphun/.jdks/ms-21.0.11 ./mvnw spring-boot:run
 ```
 
-## Scenario 1: Seed Data And ApiResponse
+Run app container on the same Docker network:
 
-1. `GET /courses`
-   - Expected status: `200`
-   - Expected body: `success = true`, message is `Fetched courses successfully`, data contains `Intro Java`
+```bash
+docker run --name rikkei-app \
+  --network rikkei-network \
+  -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://rikkei-postgres:5432/rikkei-postgres \
+  -e SPRING_DATASOURCE_USERNAME=rikkei \
+  -e SPRING_DATASOURCE_PASSWORD=rikkei \
+  -d your-spring-image
+```
 
-2. `GET /instructors`
-   - Expected status: `200`
-   - Expected body: at least two instructors
+## Scenario 1: Instructor And Course Flow
 
-3. `GET /enrollments`
-   - Expected status: `200`
-   - Expected body: at least two enrollments
-
-## Scenario 2: Basic Course CRUD
-
-1. `POST /courses`
-   - Body: `{"id":10,"title":"REST API","status":"ACTIVE","instructorId":1}`
+1. `POST /instructors`
+   - Body: `{"name":"Nguyen Van A","email":"a@example.com"}`
    - Expected status: `201`
-   - Expected body: message is `Course created`
+   - Expected body: `success = true`, message is `Instructor created`, data contains generated `id`
 
-2. `GET /courses/10`
+2. `POST /courses`
+   - Body: `{"title":"Spring Data JPA","status":"INACTIVE","instructorId":<instructorId>}`
+   - Expected status: `201`
+   - Expected body: `data.instructor.id = <instructorId>`
+
+3. `PUT /courses/<courseId>`
+   - Body: `{"title":"Spring Data JPA","status":"ACTIVE","instructorId":<instructorId>}`
    - Expected status: `200`
-   - Expected body: title is `REST API`
+   - Expected body: `data.status = ACTIVE`
 
-3. `PUT /courses/10`
-   - Body: `{"title":"REST API Updated","status":"INACTIVE","instructorId":1}`
+4. `GET /courses`
    - Expected status: `200`
-   - Expected body: title is `REST API Updated`
+   - Expected body: courses are DTOs with `id`, `title`, `status`, `instructor`; no circular entity graph
 
-4. `DELETE /courses/10`
+## Scenario 2: Student Enrollment Flow
+
+1. `POST /students`
+   - Body: `{"name":"Tran Thi B","email":"b@example.com"}`
+   - Expected status: `201`
+   - Expected body: generated student `id`
+
+2. `POST /courses/<courseId>/enrollments`
+   - Body: `{"studentId":<studentId>}`
+   - Expected status: `201`
+   - Expected body: `data.studentId`, `data.courseId`, `data.enrolledAt`
+
+3. `POST /courses/<courseId>/enrollments` again with the same body
+   - Expected status: `400`
+   - Expected body: message is `Student already enrolled in this course`
+
+4. `GET /courses/<courseId>/enrollments/students?search=Tran`
+   - Expected status: `200`
+   - Expected body: matching student appears in `data`
+
+5. `DELETE /courses/<courseId>/enrollments/students/<studentId>`
    - Expected status: `204`
 
-5. `GET /courses/10`
+## Scenario 3: Compatibility Endpoint
+
+1. `POST /students-enrollments`
+   - Body: `{"studentId":<studentId>,"courseId":<courseId>}`
+   - Expected status: `201`
+   - Expected body shape matches `POST /courses/<courseId>/enrollments`
+
+## Scenario 4: Error Cases
+
+1. `POST /courses`
+   - Body: `{"title":"Invalid Course","status":"ACTIVE","instructorId":999999}`
    - Expected status: `404`
-   - Expected body: `success = false`, message is `Course not found`
+   - Expected body: message is `Instructor not found`
 
-## Scenario 3: Enrollment Business Rules
-
-1. `POST /enrollments/enroll-course`
-   - Body: `{"id":100,"studentName":"Student test","courseId":1}`
-   - Expected status: `200`
-   - Expected body: message is `Enrollment successful`, returned course status is `ACTIVE`
-
-2. `POST /enrollments/enroll-course`
-   - Body: `{"id":101,"studentName":"Student test","courseId":2}`
+2. `POST /courses/<inactiveCourseId>/enrollments`
+   - Body: `{"studentId":<studentId>}`
    - Expected status: `400`
    - Expected body: message is `Cannot enroll in an inactive course`
 
-3. `POST /enrollments/enroll-course`
-   - Body: `{"id":102,"studentName":"Student test","courseId":999}`
-   - Expected status: `400`
+3. `GET /courses/999999`
+   - Expected status: `404`
    - Expected body: message is `Course not found`
 
-## Scenario 4: Instructor Detail Business Rule
+## Automated Check
 
-1. `GET /instructors/details`
-   - Expected status: `200`
-   - Expected body: each course in each instructor detail is `ACTIVE`
-   - Expected body: seeded instructor 1 includes course `Intro Java`
-
+```bash
+JAVA_HOME=/home/trgphun/.jdks/ms-21.0.11 ./mvnw test
+```

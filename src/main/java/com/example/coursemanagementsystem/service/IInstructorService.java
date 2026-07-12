@@ -1,19 +1,21 @@
 package com.example.coursemanagementsystem.service;
 
 import com.example.coursemanagementsystem.dto.InstructorDetail;
-import com.example.coursemanagementsystem.model.Instructor;
+import com.example.coursemanagementsystem.dto.InstructorCreateRequest;
+import com.example.coursemanagementsystem.dto.InstructorResponse;
+import com.example.coursemanagementsystem.dto.InstructorUpdateRequest;
 import java.util.List;
 
 public interface IInstructorService {
-    List<Instructor> getAllInstructors();
+    List<InstructorResponse> getAllInstructors();
 
-    Instructor getInstructorById(Long id);
+    InstructorResponse getInstructorById(Long id);
 
-    Instructor createInstructor(Instructor instructor);
+    InstructorResponse createInstructor(InstructorCreateRequest request);
 
-    Instructor updateInstructor(Long id, Instructor instructor);
+    InstructorResponse updateInstructor(Long id, InstructorUpdateRequest request);
 
-    Instructor deleteInstructorById(Long id);
+    void deleteInstructorById(Long id);
 
     List<InstructorDetail> getInstructorDetails();
 }
