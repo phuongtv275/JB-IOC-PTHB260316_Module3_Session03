@@ -1,5 +1,6 @@
 package com.example.coursemanagementsystem;
 
+import com.example.coursemanagementsystem.config.SampleDataLoader;
 import com.example.coursemanagementsystem.model.Course;
 import com.example.coursemanagementsystem.model.CourseStatus;
 import com.example.coursemanagementsystem.model.Instructor;
@@ -16,6 +17,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -38,6 +40,8 @@ class Session03ApplicationTests {
     private StudentRepository studentRepository;
     @Autowired
     private StudentEnrollmentRepository enrollmentRepository;
+    @Autowired
+    private SampleDataLoader sampleDataLoader;
 
     @BeforeEach
     void cleanDatabase() {
@@ -52,6 +56,16 @@ class Session03ApplicationTests {
     }
 
     @Test
+    void sampleDataLoaderCreatesTwentyRecordsPerTable() {
+        sampleDataLoader.run();
+
+        assertEquals(20, instructorRepository.count());
+        assertEquals(20, courseRepository.count());
+        assertEquals(20, studentRepository.count());
+        assertEquals(20, enrollmentRepository.count());
+    }
+
+    @Test
     void coursesAreReturnedWithApiResponse() throws Exception {
         Course course = saveCourse("Intro Java", CourseStatus.ACTIVE);
 
@@ -59,9 +73,36 @@ class Session03ApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Fetched courses successfully"))
-                .andExpect(jsonPath("$.data[0].id").value(course.getId()))
-                .andExpect(jsonPath("$.data[0].title").value("Intro Java"))
-                .andExpect(jsonPath("$.data[0].instructor.name").value(course.getInstructor().getName()));
+                .andExpect(jsonPath("$.data.items[0].id").value(course.getId()))
+                .andExpect(jsonPath("$.data.items[0].title").value("Intro Java"))
+                .andExpect(jsonPath("$.data.items[0].instructor").doesNotExist())
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.totalItems").value(1));
+    }
+
+    @Test
+    void coursesCanBePagedFilteredAndSorted() throws Exception {
+        saveCourse("Alpha Java", CourseStatus.ACTIVE);
+        saveCourse("Beta Java", CourseStatus.INACTIVE);
+        saveCourse("Gamma Spring", CourseStatus.ACTIVE);
+
+        mockMvc.perform(get("/courses?page=0&size=2&sortBy=title&direction=ASC&status=ACTIVE&keyword=a"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(2)))
+                .andExpect(jsonPath("$.data.items[0].title").value("Alpha Java"))
+                .andExpect(jsonPath("$.data.items[1].title").value("Gamma Spring"))
+                .andExpect(jsonPath("$.data.totalItems").value(2))
+                .andExpect(jsonPath("$.data.totalPages").value(1))
+                .andExpect(jsonPath("$.data.isLast").value(true));
+    }
+
+    @Test
+    void negativeCoursePageFallsBackToZero() throws Exception {
+        saveCourse("Intro Java", CourseStatus.ACTIVE);
+
+        mockMvc.perform(get("/courses?page=-1&size=1&sortBy=missing&direction=DESC"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page").value(0));
     }
 
     @Test
@@ -116,6 +157,20 @@ class Session03ApplicationTests {
                 .andExpect(jsonPath("$.message").value("Student created"))
                 .andExpect(jsonPath("$.data.id", notNullValue()))
                 .andExpect(jsonPath("$.data.name").value("Student One"));
+    }
+
+    @Test
+    void studentsCanBePagedSearchedAndSorted() throws Exception {
+        saveStudent("Charlie Le", "charlie@example.com");
+        saveStudent("Alice Nguyen", "alice@example.com");
+        saveStudent("Bob Tran", "bob@example.com");
+
+        mockMvc.perform(get("/students?page=0&size=2&sortBy=name&direction=ASC&keyword=e"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(2)))
+                .andExpect(jsonPath("$.data.items[0].name").value("Alice Nguyen"))
+                .andExpect(jsonPath("$.data.items[1].name").value("Charlie Le"))
+                .andExpect(jsonPath("$.data.totalItems").value(2));
     }
 
     @Test

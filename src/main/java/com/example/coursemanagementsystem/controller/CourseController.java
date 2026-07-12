@@ -6,12 +6,16 @@ import com.example.coursemanagementsystem.dto.CourseDropoutRequest;
 import com.example.coursemanagementsystem.dto.CourseEnrollmentRequest;
 import com.example.coursemanagementsystem.dto.CourseEnrollmentResponse;
 import com.example.coursemanagementsystem.dto.CourseResponse;
+import com.example.coursemanagementsystem.dto.CourseResponseV2;
 import com.example.coursemanagementsystem.dto.CourseUpdateRequest;
 import com.example.coursemanagementsystem.dto.EnrolledStudentResponse;
+import com.example.coursemanagementsystem.dto.PageResponse;
+import com.example.coursemanagementsystem.model.CourseStatus;
 import com.example.coursemanagementsystem.service.ICourseService;
 import com.example.coursemanagementsystem.service.IStudentEnrollmentService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,8 +36,18 @@ public class CourseController {
     private final IStudentEnrollmentService enrollmentService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CourseResponse>>> findAll() {
-        return ResponseEntity.ok(ApiResponse.ok("Fetched courses successfully", courseService.getAllCourses()));
+    public ResponseEntity<ApiResponse<PageResponse<CourseResponseV2>>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) Sort.Direction direction,
+            @RequestParam(required = false) CourseStatus status,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Fetched courses successfully",
+                courseService.getAllCourses(page, size, sortBy, direction, status, keyword)
+        ));
     }
 
     @GetMapping("/{id}")
